@@ -1,0 +1,991 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="DeepSeek Harness 插件生态状况、运营重点与12周行动计划">
+  <title>DeepSeek Harness 插件生态报告</title>
+  <style>
+    :root {
+      --bg: #f7f9fd;
+      --paper: #ffffff;
+      --ink: #172033;
+      --muted: #667085;
+      --line: #dce3ef;
+      --line-strong: #c6d1e2;
+      --blue: #4d6bfe;
+      --blue-2: #6f86ff;
+      --blue-pale: #eef2ff;
+      --cyan: #33b8c6;
+      --cyan-pale: #eafafb;
+      --green: #22a06b;
+      --green-pale: #eaf7f1;
+      --amber: #d99020;
+      --amber-pale: #fff6e6;
+      --red: #d94a5a;
+      --red-pale: #fff0f2;
+      --shadow: 0 24px 70px rgba(25, 42, 76, .14);
+      --radius: 24px;
+      --radius-sm: 14px;
+      --ease: cubic-bezier(.2,.8,.2,1);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { width: 100%; height: 100%; margin: 0; }
+
+    body {
+      background:
+        radial-gradient(circle at 12% 10%, rgba(77,107,254,.11), transparent 30%),
+        radial-gradient(circle at 92% 88%, rgba(51,184,198,.10), transparent 28%),
+        var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, a { font: inherit; }
+    a { color: inherit; text-decoration: none; }
+
+    .deck-shell {
+      width: 100%; height: 100%; display: grid; place-items: center;
+      padding: 2.2vh 2vw 3.4vh;
+    }
+
+    .stage {
+      position: relative;
+      width: min(96vw, calc(92vh * 16 / 9));
+      aspect-ratio: 16 / 9;
+      background: var(--paper);
+      border: 1px solid rgba(198,209,226,.75);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .stage::before {
+      content: "";
+      position: absolute; inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(77,107,254,.035) 1px, transparent 1px),
+        linear-gradient(rgba(77,107,254,.035) 1px, transparent 1px);
+      background-size: 6.25% 11.11%;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,.7), transparent 72%);
+      z-index: 0;
+    }
+
+    .slide {
+      position: absolute; inset: 0; z-index: 1;
+      padding: 5.5% 6.3% 5.2%;
+      opacity: 0; visibility: hidden; transform: translateX(22px);
+      transition: opacity .34s var(--ease), transform .34s var(--ease), visibility .34s;
+      display: flex; flex-direction: column;
+    }
+
+    .slide.is-active { opacity: 1; visibility: visible; transform: translateX(0); }
+    .slide.is-prev { transform: translateX(-22px); }
+
+    .slide::after {
+      content: "";
+      position: absolute; right: -8%; top: -18%; width: 34%; aspect-ratio: 1;
+      border: 1px solid rgba(77,107,254,.12); border-radius: 50%;
+      box-shadow: 0 0 0 34px rgba(77,107,254,.022), 0 0 0 72px rgba(51,184,198,.018);
+      pointer-events: none; z-index: -1;
+    }
+
+    .deck-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 2.4%; min-height: 3%;
+      color: var(--muted); font-size: clamp(9px, .78vw, 14px); letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .brand { display: flex; align-items: center; gap: .7em; font-weight: 760; color: var(--blue); }
+    .brand-dot { width: .62em; height: .62em; border-radius: 50%; background: var(--blue); box-shadow: 0 0 0 5px var(--blue-pale); }
+    .section-label { font-weight: 650; }
+
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: clamp(36px, 4.65vw, 78px); line-height: 1.04; letter-spacing: -.045em; }
+    h2 { font-size: clamp(25px, 2.7vw, 46px); line-height: 1.12; letter-spacing: -.035em; }
+    h3 { font-size: clamp(15px, 1.28vw, 23px); line-height: 1.24; }
+    p, li { font-size: clamp(11px, .98vw, 17px); line-height: 1.56; }
+
+    .eyebrow {
+      color: var(--blue); font-size: clamp(10px, .82vw, 14px); font-weight: 760;
+      letter-spacing: .12em; text-transform: uppercase; margin-bottom: 1.2%;
+    }
+
+    .subtitle { color: var(--muted); font-size: clamp(14px, 1.35vw, 23px); line-height: 1.5; margin-top: 1.2%; max-width: 82%; }
+    .accent { color: var(--blue); }
+    .muted { color: var(--muted); }
+    .tiny { font-size: clamp(8px, .68vw, 12px); line-height: 1.45; color: var(--muted); }
+    .small { font-size: clamp(10px, .82vw, 14px); line-height: 1.5; }
+    .strong { font-weight: 760; }
+    .mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+
+    .hero {
+      flex: 1; display: grid; grid-template-columns: 1.12fr .88fr; align-items: center; gap: 7%;
+    }
+
+    .hero-panel {
+      min-height: 58%; border-radius: 28px; padding: 8%;
+      background: linear-gradient(150deg, #4d6bfe 0%, #566ff2 48%, #33b8c6 140%);
+      color: #fff; position: relative; overflow: hidden;
+      box-shadow: 0 24px 46px rgba(77,107,254,.24);
+    }
+
+    .hero-panel::before, .hero-panel::after {
+      content: ""; position: absolute; border: 1px solid rgba(255,255,255,.23); border-radius: 50%;
+    }
+    .hero-panel::before { width: 52%; aspect-ratio: 1; right: -8%; top: -15%; }
+    .hero-panel::after { width: 74%; aspect-ratio: 1; left: -25%; bottom: -55%; }
+    .hero-panel .metric { font-size: clamp(42px, 5.3vw, 88px); font-weight: 820; letter-spacing: -.06em; }
+    .hero-panel .caption { font-size: clamp(12px, 1vw, 17px); opacity: .86; margin-top: 2%; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: .7em; margin-top: 3%; }
+    .chip {
+      display: inline-flex; align-items: center; gap: .45em; padding: .55em .9em;
+      border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.84);
+      color: var(--muted); font-size: clamp(9px, .72vw, 13px); font-weight: 650;
+    }
+    .chip.blue { background: var(--blue-pale); color: var(--blue); border-color: rgba(77,107,254,.18); }
+    .chip.red { background: var(--red-pale); color: var(--red); border-color: rgba(217,74,90,.18); }
+    .chip.green { background: var(--green-pale); color: var(--green); border-color: rgba(34,160,107,.18); }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2.1%; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.8%; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.45%; }
+    .content-fill { flex: 1; min-height: 0; margin-top: 2.5%; }
+
+    .card {
+      background: rgba(255,255,255,.88); border: 1px solid var(--line);
+      border-radius: var(--radius-sm); padding: 5.2%; position: relative; overflow: hidden;
+    }
+    .card.soft-blue { background: var(--blue-pale); border-color: rgba(77,107,254,.16); }
+    .card.soft-cyan { background: var(--cyan-pale); border-color: rgba(51,184,198,.18); }
+    .card.soft-red { background: var(--red-pale); border-color: rgba(217,74,90,.18); }
+    .card.soft-amber { background: var(--amber-pale); border-color: rgba(217,144,32,.18); }
+    .card.soft-green { background: var(--green-pale); border-color: rgba(34,160,107,.18); }
+    .card .num { font-size: clamp(26px, 3.3vw, 56px); line-height: 1; font-weight: 820; letter-spacing: -.055em; }
+    .card .label { color: var(--muted); font-size: clamp(10px, .88vw, 15px); margin-top: 7%; line-height: 1.4; }
+    .card .tag { position: absolute; right: 6%; top: 8%; font-size: clamp(8px, .62vw, 11px); font-weight: 760; color: var(--blue); }
+
+    .statement {
+      display: grid; grid-template-columns: 52px 1fr; gap: 1.1em; align-items: start;
+      padding: 2.2% 0; border-bottom: 1px solid var(--line);
+    }
+    .statement:last-child { border-bottom: 0; }
+    .statement .index {
+      display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px;
+      background: var(--blue-pale); color: var(--blue); font-weight: 800;
+      font-size: clamp(11px, .9vw, 16px);
+    }
+    .statement p { color: var(--muted); margin-top: .3em; }
+
+    .funnel { display: grid; gap: 3.4%; height: 78%; align-content: center; }
+    .funnel-row { display: grid; grid-template-columns: 19% 1fr 13%; gap: 2%; align-items: center; }
+    .funnel-label { font-size: clamp(10px, .88vw, 15px); font-weight: 680; }
+    .funnel-value { text-align: right; color: var(--muted); font-weight: 700; font-size: clamp(10px, .84vw, 15px); }
+    .track { height: clamp(18px, 2.1vw, 34px); background: #edf1f7; border-radius: 999px; overflow: hidden; }
+    .bar { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--blue), var(--blue-2)); display: flex; align-items: center; justify-content: flex-end; padding-right: 1em; color: #fff; font-weight: 760; font-size: clamp(8px, .66vw, 12px); }
+    .bar.cyan { background: linear-gradient(90deg, var(--cyan), #5ccdd5); }
+    .bar.gray { background: linear-gradient(90deg, #8c99ad, #aab4c4); }
+
+    .bar-list { display: grid; gap: 4.5%; margin-top: 5%; }
+    .bar-item { display: grid; grid-template-columns: 25% 1fr 14%; gap: 2%; align-items: center; }
+    .bar-item .name { font-size: clamp(9px, .75vw, 13px); font-weight: 680; }
+    .bar-item .value { text-align: right; font-size: clamp(9px, .78vw, 14px); color: var(--muted); font-weight: 700; }
+    .bar-item .track { height: clamp(10px, 1.1vw, 18px); }
+    .bar-item .bar { padding: 0; min-width: 4px; }
+
+    .donut-wrap { display: grid; grid-template-columns: .78fr 1.22fr; align-items: center; gap: 8%; }
+    .donut {
+      width: 82%; max-width: 220px; aspect-ratio: 1; border-radius: 50%; margin: auto;
+      background: conic-gradient(var(--blue) 0 90%, #e9edf4 90% 100%);
+      display: grid; place-items: center; position: relative;
+    }
+    .donut::after { content: ""; position: absolute; width: 68%; aspect-ratio: 1; border-radius: 50%; background: var(--paper); }
+    .donut-center { position: relative; z-index: 1; text-align: center; }
+    .donut-center strong { display: block; font-size: clamp(29px, 3.5vw, 58px); letter-spacing: -.055em; }
+    .donut-center span { display: block; font-size: clamp(8px, .68vw, 12px); color: var(--muted); margin-top: .3em; }
+
+    .matrix { width: 100%; border-collapse: separate; border-spacing: 0; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-sm); background: #fff; }
+    .matrix th, .matrix td { padding: .74em .92em; text-align: left; border-bottom: 1px solid var(--line); font-size: clamp(8px, .7vw, 12px); }
+    .matrix tr:last-child td { border-bottom: 0; }
+    .matrix th { background: #f5f7fb; color: var(--muted); font-weight: 720; }
+    .matrix td strong { font-size: 1.12em; }
+    .pill { display: inline-flex; padding: .28em .58em; border-radius: 999px; background: var(--blue-pale); color: var(--blue); font-weight: 720; }
+    .pill.red { background: var(--red-pale); color: var(--red); }
+    .pill.amber { background: var(--amber-pale); color: var(--amber); }
+    .pill.green { background: var(--green-pale); color: var(--green); }
+
+    .flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2.5%; align-items: stretch; margin-top: 5%; }
+    .flow-step { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 8% 7%; position: relative; background: #fff; }
+    .flow-step:not(:last-child)::after { content: "→"; position: absolute; right: -18%; top: 43%; color: var(--blue); font-weight: 800; font-size: clamp(14px, 1.4vw, 24px); }
+    .flow-step .icon { width: 36px; height: 36px; display: grid; place-items: center; background: var(--blue-pale); color: var(--blue); border-radius: 10px; font-weight: 820; margin-bottom: 12%; }
+    .flow-step p { color: var(--muted); margin-top: 8%; font-size: clamp(8px, .69vw, 12px); }
+
+    .priority-grid { display: grid; grid-template-columns: 1.06fr .94fr; gap: 2%; height: 100%; }
+    .priority-main { display: grid; gap: 2.5%; }
+    .priority-item { display: grid; grid-template-columns: 70px 1fr; gap: 4%; align-items: center; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 3.6% 4.5%; background: #fff; }
+    .priority-code { height: 48px; display: grid; place-items: center; border-radius: 12px; background: var(--blue); color: #fff; font-weight: 820; }
+    .priority-code.p1 { background: var(--cyan); }
+    .priority-code.p2 { background: #8c99ad; }
+    .priority-item p { color: var(--muted); margin-top: .2em; font-size: clamp(8px, .7vw, 12px); }
+
+    .layers { display: grid; gap: 5%; align-content: center; height: 92%; }
+    .layer { display: grid; grid-template-columns: 22% 1fr 15%; align-items: center; gap: 3%; padding: 3.4% 4%; border-radius: var(--radius-sm); border: 1px solid var(--line); background: #fff; }
+    .layer strong { font-size: clamp(13px, 1.15vw, 20px); }
+    .layer p { color: var(--muted); font-size: clamp(8px, .72vw, 13px); }
+    .layer .status { text-align: center; padding: .5em .7em; border-radius: 999px; background: var(--blue-pale); color: var(--blue); font-size: clamp(8px, .68vw, 12px); font-weight: 720; }
+
+    .roadmap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2%; margin-top: 3.5%; flex: 1; min-height: 0; }
+    .phase { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 5.5%; background: #fff; position: relative; }
+    .phase::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; border-radius: 14px 0 0 14px; background: var(--blue); }
+    .phase.cyan::before { background: var(--cyan); }
+    .phase.gray::before { background: #8793a6; }
+    .phase .week { font-size: clamp(9px, .72vw, 13px); color: var(--blue); font-weight: 780; letter-spacing: .06em; }
+    .phase h3 { margin-top: 4%; }
+    .phase ul { margin: 8% 0 0; padding-left: 1.1em; color: var(--muted); }
+    .phase li { margin-bottom: .48em; font-size: clamp(8px, .72vw, 13px); }
+
+    .team-table { display: grid; grid-template-columns: 1.15fr .55fr 1.6fr; border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; }
+    .team-table > div { padding: .68em .9em; border-bottom: 1px solid var(--line); font-size: clamp(8px, .72vw, 13px); }
+    .team-table > div:nth-last-child(-n+3) { border-bottom: 0; }
+    .team-table .head { background: #f5f7fb; color: var(--muted); font-weight: 720; }
+    .team-table .fte { font-weight: 820; color: var(--blue); }
+
+    .decision-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2.6%; margin-top: 3%; }
+    .decision { display: grid; grid-template-columns: 38px 1fr; gap: 1em; align-items: start; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 3.3%; background: #fff; }
+    .decision .check { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 9px; background: var(--blue-pale); color: var(--blue); font-weight: 850; }
+    .decision p { color: var(--muted); font-size: clamp(8px, .7vw, 12px); margin-top: .3em; }
+
+    .quote { border-left: 5px solid var(--blue); padding: 1.5% 0 1.5% 3%; font-size: clamp(17px, 1.8vw, 31px); line-height: 1.48; font-weight: 650; letter-spacing: -.02em; }
+
+    .source {
+      margin-top: auto; padding-top: 1.5%; border-top: 1px solid var(--line);
+      color: var(--muted); font-size: clamp(7px, .56vw, 10px); line-height: 1.4;
+    }
+    .source a { color: var(--blue); }
+
+    .slide-number {
+      position: absolute; right: 2.6%; bottom: 2.3%; z-index: 5;
+      color: var(--muted); font-size: clamp(8px, .62vw, 11px); font-variant-numeric: tabular-nums;
+    }
+
+    .progress {
+      position: fixed; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(77,107,254,.10); z-index: 20;
+    }
+    .progress > span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--blue), var(--cyan)); transition: width .3s var(--ease); }
+
+    .controls {
+      position: fixed; right: 2vw; bottom: 2.1vh; z-index: 30; display: flex; gap: 8px;
+      opacity: .38; transition: opacity .2s;
+    }
+    .controls:hover { opacity: 1; }
+    .controls button {
+      width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line-strong);
+      background: rgba(255,255,255,.92); color: var(--ink); cursor: pointer;
+      box-shadow: 0 5px 18px rgba(25,42,76,.10);
+    }
+
+    .notes { display: none; }
+    .notes-drawer {
+      display: none; position: fixed; left: 50%; bottom: 6vh; transform: translateX(-50%);
+      width: min(860px, 90vw); max-height: 34vh; overflow: auto; padding: 20px 24px;
+      background: rgba(22,30,49,.96); color: #fff; border-radius: 16px; z-index: 50;
+      box-shadow: 0 24px 70px rgba(0,0,0,.26); font-size: 15px; line-height: 1.65;
+    }
+    .notes-drawer.is-open { display: block; }
+    .notes-drawer strong { color: #9fb0ff; }
+
+    .overview {
+      display: none; position: fixed; inset: 0; z-index: 60; background: rgba(244,247,252,.98);
+      padding: 4vh 4vw; overflow: auto; grid-template-columns: repeat(4, minmax(220px, 1fr)); gap: 18px;
+    }
+    .overview.is-open { display: grid; }
+    .overview-card { aspect-ratio: 16/9; border: 1px solid var(--line); border-radius: 14px; background: #fff; padding: 20px; cursor: pointer; box-shadow: 0 10px 30px rgba(25,42,76,.08); }
+    .overview-card:hover { outline: 3px solid rgba(77,107,254,.25); }
+    .overview-card .ov-num { color: var(--blue); font-weight: 800; font-size: 12px; }
+    .overview-card h3 { margin-top: 14px; font-size: 18px; }
+    .overview-card p { margin-top: 8px; font-size: 12px; color: var(--muted); }
+
+    .key-hint { position: fixed; left: 2vw; bottom: 2vh; z-index: 30; color: var(--muted); font-size: 11px; opacity: .55; }
+
+    [data-anim] { opacity: 0; transform: translateY(10px); }
+    .is-active [data-anim] { animation: fadeUp .52s var(--ease) forwards; animation-delay: var(--delay, 0s); }
+    @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 900px) {
+      .deck-shell { padding: 0; }
+      .stage { width: 100vw; border-radius: 0; border: 0; }
+      .controls, .key-hint { display: none; }
+    }
+
+    @media print {
+      body { overflow: visible; background: #fff; }
+      .deck-shell { display: block; padding: 0; }
+      .stage { width: 100%; height: auto; aspect-ratio: auto; overflow: visible; border: 0; box-shadow: none; }
+      .slide { position: relative; width: 100%; aspect-ratio: 16/9; opacity: 1 !important; visibility: visible !important; transform: none !important; page-break-after: always; }
+      .controls, .key-hint, .progress, .notes-drawer, .overview { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck-shell">
+    <div class="stage" id="stage">
+
+      <section class="slide is-active" data-title="封面" data-summary="插件生态状况、运营重点与12周行动计划">
+        <div class="deck-header">
+          <div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div>
+          <div>ECOSYSTEM REPORT · 2026.09.19</div>
+        </div>
+        <div class="hero">
+          <div data-anim style="--delay:.05s">
+            <div class="eyebrow">PLUGIN ECOSYSTEM / V2.0</div>
+            <h1>插件生态状况、<br><span class="accent">运营重点</span>与行动计划</h1>
+            <p class="subtitle">从“开放发布社区”升级为可发现、可安装、可验证、可隔离、可治理的开发者生态。</p>
+            <div class="chips">
+              <span class="chip blue">内部管理层汇报</span>
+              <span class="chip">27页</span>
+              <span class="chip">数据截至 2026.09.19</span>
+            </div>
+          </div>
+          <div class="hero-panel" data-anim style="--delay:.18s">
+            <div class="tiny" style="color:rgba(255,255,255,.78)">PUBLIC SUPPLY</div>
+            <div class="metric">15,141</div>
+            <div class="caption">插件相关公开项目</div>
+            <div style="height:1px;background:rgba(255,255,255,.25);margin:12% 0 9%"></div>
+            <div class="small" style="opacity:.9">核心判断</div>
+            <h3 style="font-size:clamp(18px,1.75vw,30px);margin-top:4%;line-height:1.35">供给规模已经足够大，<br>治理能力成为增长瓶颈。</h3>
+          </div>
+        </div>
+        <div class="notes"><strong>开场：</strong>这份报告不再讨论“有没有插件生态”，答案已经很明确——有，而且增长很快。今天要解决的是第二阶段问题：如何把大量开放供给转化成稳定、可信、可持续的用户价值。</div>
+      </section>
+
+      <section class="slide" data-title="结论先行" data-summary="生态已越过冷启动，下一阶段必须从拉数量转向提有效供给">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">01 / EXECUTIVE VIEW</div></div>
+        <div class="eyebrow">结论先行</div>
+        <h2>生态已越过冷启动，下一阶段要从<span class="accent">拉数量</span>转向<span class="accent">提有效供给</span></h2>
+        <div class="content-fill grid-2" style="gap:5%">
+          <div>
+            <div class="statement" data-anim style="--delay:.05s"><div class="index">01</div><div><h3>供给仍在高速膨胀</h3><p>25天内公开项目近似增长32.4%，但大多数项目尚未进入可验证供给池。</p></div></div>
+            <div class="statement" data-anim style="--delay:.12s"><div class="index">02</div><div><h3>真实需求高度集中</h3><p>659个样本覆盖90%的30日下载，优先治理Top 100–500即可覆盖大部分风险。</p></div></div>
+            <div class="statement" data-anim style="--delay:.19s"><div class="index">03</div><div><h3>兼容问题已经结构化</h3><p>版本范围、依赖类型、双运行时和宿主全量退出共同放大故障。</p></div></div>
+          </div>
+          <div class="card soft-blue" data-anim style="--delay:.16s;padding:7%">
+            <div class="tiny strong accent">NEXT 90 DAYS</div>
+            <div class="quote" style="margin-top:6%">把插件生态从“开放发布社区”，升级为“可发现、可安装、可验证、可隔离、可治理”的开发者生态。</div>
+            <div class="chips" style="margin-top:8%">
+              <span class="chip blue">故障隔离</span><span class="chip blue">兼容验证</span><span class="chip blue">权限透明</span><span class="chip blue">头部治理</span>
+            </div>
+          </div>
+        </div>
+        <div class="notes"><strong>本页重点：</strong>不要再用插件总数判断生态健康度。项目数继续增长，会同时放大支持成本、兼容成本和供应链风险。未来90天的判断标准，是头部插件能否稳定跟随版本、单个插件是否还会拖垮宿主，以及用户能否在安装前理解风险。</div>
+      </section>
+
+      <section class="slide" data-title="证据与口径" data-summary="一手公开、实时第三方、历史基线三层证据分开使用">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">02 / METHODOLOGY</div></div>
+        <div class="eyebrow">证据分级</div>
+        <h2>当前状态、历史漏斗与运营代理<span class="accent">分开使用</span></h2>
+        <div class="content-fill grid-3">
+          <div class="card soft-blue" data-anim style="--delay:.04s"><span class="tag">LEVEL 1</span><h3>一手公开数据</h3><p class="muted" style="margin-top:7%">GitHub仓库、Discussions、npm、官方README、SAFETY与审批策略。</p><div class="chips"><span class="chip blue">当前判断</span></div></div>
+          <div class="card soft-cyan" data-anim style="--delay:.12s"><span class="tag" style="color:var(--cyan)">LEVEL 2</span><h3>实时第三方数据</h3><p class="muted" style="margin-top:7%">9月19日dshfind、9月2日安全扫描、9月18日兼容审计。</p><div class="chips"><span class="chip green">现状补足</span></div></div>
+          <div class="card soft-amber" data-anim style="--delay:.2s"><span class="tag" style="color:var(--amber)">LEVEL 3</span><h3>8月25日历史基线</h3><p class="muted" style="margin-top:7%">可安装数、真实使用数和拒稿原因，只用于描述历史漏斗。</p><div class="chips"><span class="chip">不可当作9月绝对值</span></div></div>
+        </div>
+        <div class="card" style="margin-top:2.3%;padding:2.6% 3.2%" data-anim style="--delay:.25s">
+          <div class="grid-4">
+            <div><div class="strong accent">npm下载</div><div class="tiny">≠ 独立用户</div></div>
+            <div><div class="strong accent">GitHub Topic</div><div class="tiny">≠ 可安装插件</div></div>
+            <div><div class="strong accent">讨论数量</div><div class="tiny">≠ 实际故障率</div></div>
+            <div><div class="strong accent">公开账号</div><div class="tiny">≠ 内部FTE</div></div>
+          </div>
+        </div>
+        <div class="notes"><strong>口径说明：</strong>这份报告使用公开代理做方向判断，但没有把公开数据包装成内部真实值。尤其是8月25日数据已经降级为历史基线，当前供给规模由9月19日实时目录承担，兼容和安全判断分别由9月18日与9月2日材料承担。</div>
+      </section>
+
+      <section class="slide" data-title="供给规模" data-summary="15,141个项目、8,816位作者，25天近似增长32.4%">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">03 / SUPPLY</div></div>
+        <div class="eyebrow">供给规模</div>
+        <h2>项目数量仍在高速增长，<span class="accent">验证覆盖明显滞后</span></h2>
+        <div class="content-fill grid-4">
+          <div class="card soft-blue" data-anim style="--delay:.04s"><div class="num accent">15,141</div><div class="label">插件相关公开项目</div></div>
+          <div class="card" data-anim style="--delay:.1s"><div class="num">8,816</div><div class="label">公开作者</div></div>
+          <div class="card soft-cyan" data-anim style="--delay:.16s"><div class="num" style="color:var(--cyan)">+32.4%</div><div class="label">与8月25日近似同口径比较</div></div>
+          <div class="card soft-amber" data-anim style="--delay:.22s"><div class="num" style="color:var(--amber)">3.1%</div><div class="label">进入S/A/B/C评级档位</div></div>
+        </div>
+        <div class="grid-2" style="margin-top:2.4%;gap:4%">
+          <div class="card" style="padding:3.2% 4%">
+            <h3>主要供给类别</h3>
+            <div class="bar-list" style="gap:3%">
+              <div class="bar-item"><div class="name">工具集成</div><div class="track"><div class="bar" style="width:100%"></div></div><div class="value">2,213</div></div>
+              <div class="bar-item"><div class="name">Agent增强</div><div class="track"><div class="bar cyan" style="width:78.5%"></div></div><div class="value">1,738</div></div>
+              <div class="bar-item"><div class="name">面板增强</div><div class="track"><div class="bar gray" style="width:65.6%"></div></div><div class="value">1,452</div></div>
+              <div class="bar-item"><div class="name">客户端</div><div class="track"><div class="bar gray" style="width:43.6%"></div></div><div class="value">964</div></div>
+            </div>
+          </div>
+          <div class="card soft-red" style="padding:4.2% 5%">
+            <div class="tiny strong" style="color:var(--red)">KEY IMPLICATION</div>
+            <h3 style="margin-top:4%;font-size:clamp(18px,1.55vw,27px)">供给增长速度已经超过人工治理能力</h3>
+            <p class="muted" style="margin-top:5%">继续拉新只会扩大无效项目、支持工单和安全暴露。下一阶段必须依赖自动化校验与头部治理。</p>
+          </div>
+        </div>
+        <div class="source">来源：<a href="https://dshfind.com/zh/plugins">dshfind实时目录</a>，访问日期2026-09-19；增幅按8月25日11,439个GitHub Topic项目近似比较。</div>
+        <div class="notes"><strong>解读：</strong>供给没有冷启动问题。真正的问题是，超过九成项目没有进入可识别的评级档位。这里不把评级理解成官方质量认证，只把它作为“被进一步筛选”的代理。</div>
+      </section>
+
+      <section class="slide" data-title="历史漏斗" data-summary="8月25日仅18.7%符合安装规范，8.3%观察到真实使用">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">04 / HISTORICAL FUNNEL</div></div>
+        <div class="eyebrow">历史漏斗基线</div>
+        <h2>最大的漏损发生在<span class="accent">“项目存在 → 能够安装”</span></h2>
+        <div class="content-fill grid-2" style="gap:6%">
+          <div class="funnel" data-anim style="--delay:.06s">
+            <div class="funnel-row"><div class="funnel-label">GitHub Topic</div><div class="track"><div class="bar" style="width:100%">100%</div></div><div class="funnel-value">11,439</div></div>
+            <div class="funnel-row"><div class="funnel-label">符合安装规范</div><div class="track"><div class="bar cyan" style="width:18.7%">18.7%</div></div><div class="funnel-value">2,143</div></div>
+            <div class="funnel-row"><div class="funnel-label">观察到真实使用</div><div class="track"><div class="bar gray" style="width:8.3%">8.3%</div></div><div class="funnel-value">955</div></div>
+          </div>
+          <div style="display:grid;gap:4%;align-content:center">
+            <div class="card soft-red" data-anim style="--delay:.14s"><div class="num" style="color:var(--red)">93%</div><div class="label">公开拒稿因Bundle、依赖或技能布局等基础规范问题</div></div>
+            <div class="card soft-blue" data-anim style="--delay:.22s"><h3>运营含义</h3><p class="muted" style="margin-top:4%">第一优先不是继续征集插件，而是提供脚手架、Linter、自动安装验证和清晰错误信息。</p></div>
+          </div>
+        </div>
+        <div class="source">来源：<a href="https://zhuanlan.zhihu.com/p/2077876047886934148">2026-08-25第三方生态普查</a>。本页仅作为历史漏斗基线，不代表9月19日当前绝对值。</div>
+        <div class="notes"><strong>关键变化：</strong>这页保留旧报告，但明确标为历史基线。它的作用是告诉我们漏点在哪里，而不是告诉我们今天有多少可安装插件。新的绝对数量必须等官方Registry或同口径复测。</div>
+      </section>
+
+      <section class="slide" data-title="真实使用集中" data-summary="659个样本覆盖90%下载，头部治理可以覆盖大部分风险">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">05 / USAGE CONCENTRATION</div></div>
+        <div class="eyebrow">真实使用</div>
+        <h2>下载高度集中，先治理<span class="accent">Top 100–500</span>即可覆盖大部分风险</h2>
+        <div class="content-fill donut-wrap">
+          <div class="donut" data-anim style="--delay:.05s"><div class="donut-center"><strong>90%</strong><span>30日下载覆盖</span></div></div>
+          <div>
+            <div class="grid-2" style="gap:3%">
+              <div class="card soft-blue" data-anim style="--delay:.11s"><div class="num accent">659</div><div class="label">抽样插件</div></div>
+              <div class="card" data-anim style="--delay:.17s"><div class="num">2,916</div><div class="label">市场快照插件</div></div>
+            </div>
+            <div class="card soft-cyan" style="margin-top:3%;padding:4.5%" data-anim style="--delay:.23s">
+              <h3>资源配置结论</h3>
+              <p class="muted" style="margin-top:3%">人工审核聚焦Top 100；自动扫描扩展至Top 500；其余长尾由自动化准入和社区治理覆盖。</p>
+            </div>
+            <div class="chips"><span class="chip blue">头部优先</span><span class="chip">分层治理</span><span class="chip">不平均用力</span></div>
+          </div>
+        </div>
+        <div class="source">来源：<a href="https://github.com/deepseek-ai/deepseek-harness/discussions/5639">插件权限研究 #5639</a>，数据集快照2026-09-02。</div>
+        <div class="notes"><strong>本页决策含义：</strong>生态项目很多，但真实用户并没有平均分布。第一阶段不需要试图审核1.5万个项目，优先把Top 100做深、Top 500做自动扫描，就能覆盖绝大多数实际风险。</div>
+      </section>
+
+      <section class="slide" data-title="当前需求结构" data-summary="第三方插件已进入主流路径，需求首先集中在市场和基础体验">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">06 / DEMAND</div></div>
+        <div class="eyebrow">需求结构</div>
+        <h2>第三方插件已进入主流路径，用户首先在补<span class="accent">基础体验缺口</span></h2>
+        <div class="content-fill grid-2" style="gap:6%">
+          <div class="card" data-anim style="--delay:.05s">
+            <h3>npm周下载</h3>
+            <div class="bar-list">
+              <div class="bar-item"><div class="name">官方入口</div><div class="track"><div class="bar" style="width:100%"></div></div><div class="value">254k</div></div>
+              <div class="bar-item"><div class="name">dshmarket</div><div class="track"><div class="bar cyan" style="width:27.8%"></div></div><div class="value">70.7k</div></div>
+              <div class="bar-item"><div class="name">better-sidebar</div><div class="track"><div class="bar cyan" style="width:19.4%"></div></div><div class="value">49.3k</div></div>
+              <div class="bar-item"><div class="name">cost-meter</div><div class="track"><div class="bar gray" style="width:5.8%"></div></div><div class="value">14.8k</div></div>
+              <div class="bar-item"><div class="name">modlens</div><div class="track"><div class="bar gray" style="width:4.8%"></div></div><div class="value">12.2k</div></div>
+            </div>
+          </div>
+          <div style="display:grid;gap:3%">
+            <div class="statement" data-anim style="--delay:.12s"><div class="index">A</div><div><h3>市场与发现</h3><p>单个社区市场周下载已接近官方入口的28%。</p></div></div>
+            <div class="statement" data-anim style="--delay:.18s"><div class="index">B</div><div><h3>工作台与交互</h3><p>头部UI插件周下载接近官方入口的19%。</p></div></div>
+            <div class="statement" data-anim style="--delay:.24s"><div class="index">C</div><div><h3>运营判断</h3><p>用户在用插件补齐发现、工作台、成本与可观测性，而非只追求新奇功能。</p></div></div>
+          </div>
+        </div>
+        <div class="source">来源：npm公开页面，访问日期2026-09-19。下载包含升级、重复安装与CI，不等于独立活跃用户。</div>
+        <div class="notes"><strong>解读：</strong>生态已经不是边缘实验。另一方面，最受欢迎的插件首先是市场、侧边栏和成本统计，说明插件生态在承担一部分宿主产品基础体验的补位功能。</div>
+      </section>
+
+      <section class="slide" data-title="版本故障压力" data-summary="alpha版本公开Bug讨论日密度显著高于rc版本">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">07 / RELIABILITY</div></div>
+        <div class="eyebrow">版本压力</div>
+        <h2>alpha版本的公开Bug讨论密度，约为早期rc的<span class="accent">3–5倍</span></h2>
+        <div class="content-fill grid-2" style="gap:5%">
+          <div class="card" data-anim style="--delay:.04s">
+            <table class="matrix">
+              <thead><tr><th>版本</th><th>发布天数</th><th>Bug帖</th><th>日均</th><th>零评论</th></tr></thead>
+              <tbody>
+                <tr><td><strong>0.1.2-rc.1</strong></td><td>16</td><td>14</td><td><span class="pill green">0.88</span></td><td>35.7%</td></tr>
+                <tr><td><strong>0.1.5-rc.2</strong></td><td>8</td><td>12</td><td><span class="pill amber">1.50</span></td><td>58.3%</td></tr>
+                <tr><td><strong>0.1.6-a.1</strong></td><td>4</td><td>12</td><td><span class="pill red">3.00</span></td><td>50.0%</td></tr>
+                <tr><td><strong>0.1.6-a.2</strong></td><td>2</td><td>9</td><td><span class="pill red">4.50</span></td><td>33.3%</td></tr>
+              </tbody>
+            </table>
+            <div class="tiny" style="margin-top:4%">口径：标题明确标注版本号并包含“Bug”的GitHub Discussions；用于衡量公开问题压力，不等于真实故障率。</div>
+          </div>
+          <div style="display:grid;gap:3%">
+            <div class="card soft-blue" data-anim style="--delay:.12s"><div class="tiny strong accent">RELEASE POLICY</div><h3 style="margin-top:4%">需要Stable / Current / Next三通道</h3><p class="muted" style="margin-top:4%">插件默认支持Stable；Current用于正式候选；Next给维护者提前7–14天适配。</p></div>
+            <div class="card soft-red" data-anim style="--delay:.2s"><div class="tiny strong" style="color:var(--red)">GATE</div><h3 style="margin-top:4%">发布前必须跑Top 50兼容矩阵</h3><p class="muted" style="margin-top:4%">破坏性变更需要迁移指南、弃用期和回滚路径。</p></div>
+          </div>
+        </div>
+        <div class="notes"><strong>注意：</strong>这里没有声称真实故障率。我们用日均公开Bug讨论做发布压力代理。它足以支持一个运营判断：预览通道需要更明确的适配期和门禁，不能直接把兼容成本转给插件作者。</div>
+      </section>
+
+      <section class="slide" data-title="22个插件审计" data-summary="5个拒绝最新版本，1个静默双运行时，绿色CI仍可漏报">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">08 / COMPATIBILITY AUDIT</div></div>
+        <div class="eyebrow">9月18日维护者审计</div>
+        <h2>兼容问题已从“装不上”扩展到<span class="accent">“安装成功但运行时失真”</span></h2>
+        <div class="content-fill grid-3">
+          <div class="card soft-red" data-anim style="--delay:.04s"><div class="num" style="color:var(--red)">5 / 22</div><div class="label">版本范围错误，直接拒绝最新0.1.6-alpha.2</div></div>
+          <div class="card soft-amber" data-anim style="--delay:.12s"><div class="num" style="color:var(--amber)">1</div><div class="label">错误使用Dependency，静默安装第二套DSH运行时</div></div>
+          <div class="card soft-green" data-anim style="--delay:.2s"><div class="num" style="color:var(--green)">3</div><div class="label">窄版本范围是有意设计，不能一概判错</div></div>
+        </div>
+        <div class="grid-2" style="margin-top:2.5%;gap:4%">
+          <div class="card" style="padding:3.2% 4%" data-anim style="--delay:.18s">
+            <h3>为什么绿色CI仍会漏报？</h3>
+            <p class="muted" style="margin-top:4%">测试只验证已声明版本；新宿主版本发布后，没有机制重新计算范围是否覆盖最新版本。</p>
+          </div>
+          <div class="card soft-blue" style="padding:3.2% 4%" data-anim style="--delay:.24s">
+            <h3>官方侧最佳投入点</h3>
+            <p class="muted" style="margin-top:4%">机器计算SemVer实际集合、检查Peer Dependency身份，并在真实宿主上完成安装与挂载。</p>
+          </div>
+        </div>
+        <div class="source">来源：<a href="https://github.com/deepseek-ai/deepseek-harness/discussions/7006">GitHub Discussion #7006</a>，维护者可复现审计，2026-09-18。</div>
+        <div class="notes"><strong>本页是关键证据：</strong>兼容性不能只做字段存在性检查。五个插件被最新版本拒绝，另一个更危险——安装成功但同进程存在两套DSH运行时。必须同时检查SemVer集合、依赖身份和真实挂载。</div>
+      </section>
+
+      <section class="slide" data-title="P0：故障隔离" data-summary="单插件失败必须降级为可见的局部故障，而不是整个宿主退出">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">09 / P0 ISOLATION</div></div>
+        <div class="eyebrow">最高优先级</div>
+        <h2>把“整个产品不可用”降级为<span class="accent">“单个插件失败且原因可见”</span></h2>
+        <div class="flow" data-anim style="--delay:.06s">
+          <div class="flow-step"><div class="icon">1</div><h3>导入插件</h3><p>逐个加载，不再把插件树视为不可分割整体。</p></div>
+          <div class="flow-step"><div class="icon">2</div><h3>捕获失败</h3><p>识别包名、版本、错误类型和依赖链。</p></div>
+          <div class="flow-step"><div class="icon">3</div><h3>自动禁用</h3><p>失败插件写入Disabled，其他插件继续启动。</p></div>
+          <div class="flow-step"><div class="icon">4</div><h3>显式告知</h3><p>CLI、UI、日志同步展示；禁止静默跳过。</p></div>
+          <div class="flow-step"><div class="icon">5</div><h3>恢复路径</h3><p>Safe Mode、快照、卸载和一键回滚。</p></div>
+        </div>
+        <div class="grid-3" style="margin-top:4%">
+          <div class="card soft-blue"><h3>Safe Mode</h3><p class="tiny" style="margin-top:4%">无第三方插件启动，始终保留修复入口。</p></div>
+          <div class="card soft-cyan"><h3>启动诊断</h3><p class="tiny" style="margin-top:4%">明确指出失败插件、包和处理建议。</p></div>
+          <div class="card soft-green"><h3>可恢复操作</h3><p class="tiny" style="margin-top:4%">安装、升级、卸载前自动生成快照。</p></div>
+        </div>
+        <div class="source">现状证据：<a href="https://github.com/deepseek-ai/deepseek-harness/discussions/7004">#7004</a>、<a href="https://github.com/deepseek-ai/deepseek-harness/discussions/7006">#7006</a>、<a href="https://github.com/deepseek-ai/deepseek-harness/discussions/6608">#6608</a>。</div>
+        <div class="notes"><strong>P0原因：</strong>兼容错误不可避免，但影响面可以控制。当前单插件错误会放大成宿主整体故障，直接损害核心产品可信度。隔离机制必须可见，不能简单静默跳过，否则用户会误以为插件正常工作。</div>
+      </section>
+
+      <section class="slide" data-title="安全与信任" data-summary="插件普遍接近高权限能力，安全治理重点是透明、持续和可处置">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">10 / SECURITY</div></div>
+        <div class="eyebrow">安全与信任</div>
+        <h2>问题不是“插件一定恶意”，而是用户安装前<span class="accent">看不见能力边界</span></h2>
+        <div class="content-fill grid-2" style="gap:5%">
+          <div class="card" data-anim style="--delay:.05s">
+            <h3>590个成功扫描样本</h3>
+            <div class="bar-list" style="gap:3.6%">
+              <div class="bar-item"><div class="name">读取文件</div><div class="track"><div class="bar" style="width:91%"></div></div><div class="value">91%</div></div>
+              <div class="bar-item"><div class="name">环境变量</div><div class="track"><div class="bar" style="width:81%"></div></div><div class="value">81%</div></div>
+              <div class="bar-item"><div class="name">访问网络</div><div class="track"><div class="bar cyan" style="width:74%"></div></div><div class="value">74%</div></div>
+              <div class="bar-item"><div class="name">执行Shell</div><div class="track"><div class="bar cyan" style="width:63%"></div></div><div class="value">63%</div></div>
+              <div class="bar-item"><div class="name">修改工具注册表</div><div class="track"><div class="bar gray" style="width:48%"></div></div><div class="value">48%</div></div>
+            </div>
+          </div>
+          <div style="display:grid;gap:3%">
+            <div class="card soft-red" data-anim style="--delay:.13s"><div class="tiny strong" style="color:var(--red)">GAP</div><h3 style="margin-top:3%">无公开SECURITY.md、无统一权限Manifest</h3></div>
+            <div class="card soft-blue" data-anim style="--delay:.2s"><h3>两周内补齐</h3><p class="muted" style="margin-top:4%">私密报告入口、P0/P1 SLA、紧急禁用、受影响版本通知与安全公告。</p></div>
+            <div class="chips"><span class="chip red">权限变化重新确认</span><span class="chip blue">持续扫描</span><span class="chip">来源证明</span></div>
+          </div>
+        </div>
+        <div class="source">来源：<a href="https://github.com/deepseek-ai/deepseek-harness/discussions/5639">插件权限研究 #5639</a>，2026-09-02。High/Critical代表能力暴露与潜在影响，不等于恶意或已确认漏洞。</div>
+        <div class="notes"><strong>表述边界：</strong>不能把94.7% High/Critical写成94.7%插件恶意。正确判断是，高权限是插件实现功能的常态，所以官方更需要标准化披露、重新授权和应急处置。</div>
+      </section>
+
+      <section class="slide" data-title="运营优先级" data-summary="P0止损、P1建事实层、P2做维护者与真实数据">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">11 / PRIORITIES</div></div>
+        <div class="eyebrow">下一步运营重点</div>
+        <h2>先止损、再建事实层，最后放大健康供给</h2>
+        <div class="content-fill priority-grid">
+          <div class="priority-main">
+            <div class="priority-item" data-anim style="--delay:.04s"><div class="priority-code">P0</div><div><h3>故障隔离 + 兼容验证 + 安全入口</h3><p>Safe Mode、SemVer集合、双运行时检查、真实挂载、SECURITY.md。</p></div></div>
+            <div class="priority-item" data-anim style="--delay:.12s"><div class="priority-code p1">P1</div><div><h3>官方Registry + Permission Manifest</h3><p>建立统一事实层，展示兼容、权限、维护与已知风险。</p></div></div>
+            <div class="priority-item" data-anim style="--delay:.2s"><div class="priority-code p2">P2</div><div><h3>维护者运营 + 真实数据</h3><p>Next适配窗口、Office Hour、最小化遥测和生命周期治理。</p></div></div>
+          </div>
+          <div class="card soft-blue" style="padding:7%" data-anim style="--delay:.16s">
+            <div class="tiny strong accent">OPERATING PRINCIPLE</div>
+            <div class="quote" style="margin-top:7%;font-size:clamp(16px,1.55vw,27px)">不平均治理1.5万个项目。<br>Top 100人工深度治理，Top 500自动扫描，其余由自动化准入与社区分层覆盖。</div>
+          </div>
+        </div>
+        <div class="notes"><strong>顺序很重要：</strong>如果先做市场首页和内容运营，但宿主仍会被一个插件拖垮，增长只会放大风险。P0必须先完成最基本的隔离、兼容和安全响应。</div>
+      </section>
+
+      <section class="slide" data-title="生态运营系统" data-summary="四条运营流水线把开放供给转化为稳定、可信、持续使用的有效供给">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">12 / OPERATING SYSTEM</div></div>
+        <div class="eyebrow">运营总框架</div>
+        <h2>运营不是做活动，而是持续把<span class="accent">开放供给转化为有效供给</span></h2>
+        <div class="content-fill grid-2" style="gap:2.4%">
+          <div class="card soft-blue" data-anim style="--delay:.03s"><div class="tiny strong accent">01 · SUPPLY</div><h3 style="margin-top:3%">供给治理</h3><p class="muted" style="margin-top:3%">发现项目、统一登记、自动校验、分层准入、生命周期退出。</p><div class="chips"><span class="chip blue">Owner：生态产品</span><span class="chip">有效供给率</span></div></div>
+          <div class="card soft-cyan" data-anim style="--delay:.09s"><div class="tiny strong" style="color:var(--cyan)">02 · MAINTAINER</div><h3 style="margin-top:3%">维护者成功</h3><p class="muted" style="margin-top:3%">适配窗口、迁移支持、Office Hour、头部共创与维护者接班。</p><div class="chips"><span class="chip">Owner：DevRel</span><span class="chip">适配时长</span></div></div>
+          <div class="card soft-green" data-anim style="--delay:.15s"><div class="tiny strong" style="color:var(--green)">03 · ADOPTION</div><h3 style="margin-top:3%">用户采用</h3><p class="muted" style="margin-top:3%">场景化发现、风险解释、安装激活、留存召回与问题闭环。</p><div class="chips"><span class="chip green">Owner：生态运营</span><span class="chip">激活与留存</span></div></div>
+          <div class="card soft-amber" data-anim style="--delay:.21s"><div class="tiny strong" style="color:var(--amber)">04 · TRUST</div><h3 style="margin-top:3%">信任与风险</h3><p class="muted" style="margin-top:3%">权限披露、持续扫描、故障隔离、应急下架和公开复盘。</p><div class="chips"><span class="chip">Owner：安全 + 工程</span><span class="chip red">事故率</span></div></div>
+        </div>
+        <div class="quote" style="margin-top:1.5%;font-size:clamp(13px,1.25vw,21px)">同一张插件事实表驱动四条流水线；避免运营、工程、安全各自维护一套名单。</div>
+        <div class="notes"><strong>运营定义：</strong>这里刻意把运营从内容发布和社区活动中抽离出来。核心工作是设计规则、推动供给进入规则、帮助用户完成采用，并对风险负责。四条流水线共用Registry事实层，周会上只讨论异常和跨团队阻塞。</div>
+      </section>
+
+      <section class="slide" data-title="插件组合分层" data-summary="按用户价值与运营风险分四类，资源投放不再平均分配">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">13 / SEGMENTATION</div></div>
+        <div class="eyebrow">运营对象分层</div>
+        <h2>插件不应平均运营：按<span class="accent">用户价值 × 运营风险</span>配置不同动作</h2>
+        <div class="content-fill grid-2" style="gap:2.2%">
+          <div class="card soft-blue" data-anim style="--delay:.03s"><span class="pill">高价值 / 高风险</span><h3 style="margin-top:4%">A · 核心基础设施</h3><p class="muted" style="margin-top:3%">市场、权限、记忆、IDE、工具连接等。Top 50人工验证，版本发布前完成联合适配；故障进入P0/P1值班。</p><div class="tiny strong" style="margin-top:4%">目标：Current兼容率 ≥95%</div></div>
+          <div class="card soft-green" data-anim style="--delay:.09s"><span class="pill green">高价值 / 低风险</span><h3 style="margin-top:4%">B · 场景明星</h3><p class="muted" style="margin-top:3%">高复用效率工具与成熟垂类能力。进入Recommended、案例共创和场景榜单，集中推动激活与留存。</p><div class="tiny strong" style="margin-top:4%">目标：安装→激活 ≥60%</div></div>
+          <div class="card soft-amber" data-anim style="--delay:.15s"><span class="pill amber">低价值 / 高风险</span><h3 style="margin-top:4%">C · 高风险长尾</h3><p class="muted" style="margin-top:3%">高权限、弱维护或兼容范围不明。默认不推荐，强化告警与沙箱；触发阈值后自动降级或下架。</p><div class="tiny strong" style="margin-top:4%">目标：风险暴露可见率 100%</div></div>
+          <div class="card" data-anim style="--delay:.21s"><span class="pill">低价值 / 低风险</span><h3 style="margin-top:4%">D · 社区长尾</h3><p class="muted" style="margin-top:3%">保持开放收录，以自动化校验和社区自助为主；不投入一对一人力，不用数量增长作为团队KPI。</p><div class="tiny strong" style="margin-top:4%">目标：自动化覆盖 ≥90%</div></div>
+        </div>
+        <div class="source">分层依据：30日活跃安装、场景不可替代性、权限范围、兼容失败、维护活跃度；每月重算一次，重大事故即时调整。</div>
+        <div class="notes"><strong>资源原则：</strong>A类插件保障系统稳定，B类插件贡献增长，C类插件控制风险，D类插件维持开放。分层不是永久评级，而是资源分配机制。任何插件的数据和维护状态变化后，都可以升降级。</div>
+      </section>
+
+      <section class="slide" data-title="官方Registry" data-summary="Community、Verified、Recommended三层分级，建立插件事实源">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">14 / REGISTRY</div></div>
+        <div class="eyebrow">官方事实层</div>
+        <h2>Registry的第一职责不是“卖插件”，而是回答<span class="accent">能不能装、能不能用、风险是什么</span></h2>
+        <div class="content-fill layers" data-anim style="--delay:.06s">
+          <div class="layer"><strong>Recommended</strong><p>Verified基础上达到维护、质量、使用与公共价值门槛。</p><div class="status">精选推荐</div></div>
+          <div class="layer"><strong>Verified</strong><p>通过安装、兼容、权限、来源和维护状态检查。</p><div class="status">官方验证</div></div>
+          <div class="layer"><strong>Community</strong><p>完成基本登记，尚未经过官方验证；保持低门槛开放。</p><div class="status">社区收录</div></div>
+        </div>
+        <div class="grid-4" style="margin-top:1%">
+          <div class="card"><h3>兼容</h3><p class="tiny" style="margin-top:5%">版本范围与最近验证</p></div>
+          <div class="card"><h3>权限</h3><p class="tiny" style="margin-top:5%">文件、网络、Shell等</p></div>
+          <div class="card"><h3>维护</h3><p class="tiny" style="margin-top:5%">维护者与最近活动</p></div>
+          <div class="card"><h3>恢复</h3><p class="tiny" style="margin-top:5%">已知问题与回滚方式</p></div>
+        </div>
+        <div class="notes"><strong>定位：</strong>Registry短期不必做成完整商店。它首先是官方事实层，把插件的身份、兼容、权限、维护和恢复信息统一起来。Community保持开放，Verified才承担官方检查含义。</div>
+      </section>
+
+      <section class="slide" data-title="维护者运营" data-summary="围绕招募、入驻、适配、增长、接班建立维护者全生命周期机制">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">15 / MAINTAINER SUCCESS</div></div>
+        <div class="eyebrow">开发者与维护者运营</div>
+        <h2>把维护者关系从“遇到Bug再联系”改成<span class="accent">全生命周期成功计划</span></h2>
+        <div class="flow" style="margin-top:3.2%">
+          <div class="flow-step" data-anim style="--delay:.03s"><div class="icon">1</div><h3>识别</h3><p>从下载、依赖与社区影响识别Top 100及关键空白场景。</p></div>
+          <div class="flow-step" data-anim style="--delay:.08s"><div class="icon">2</div><h3>入驻</h3><p>30分钟Quickstart、样板仓库、Manifest向导与自检命令。</p></div>
+          <div class="flow-step" data-anim style="--delay:.13s"><div class="icon">3</div><h3>适配</h3><p>Next提前14天、兼容CI、迁移诊所与联合问题单。</p></div>
+          <div class="flow-step" data-anim style="--delay:.18s"><div class="icon">4</div><h3>增长</h3><p>场景榜单、官方案例、联合发布与数据反馈。</p></div>
+          <div class="flow-step" data-anim style="--delay:.23s"><div class="icon">5</div><h3>接班/退出</h3><p>维护风险预警、共同维护者引入、归档和用户迁移。</p></div>
+        </div>
+        <div class="grid-3" style="margin-top:4%">
+          <div class="card soft-blue"><h3>Top 20 · 共创</h3><p class="tiny" style="margin-top:4%">专属群 + 双周1:1 + 发布前联合验证</p></div>
+          <div class="card soft-cyan"><h3>Top 100 · 加速</h3><p class="tiny" style="margin-top:4%">Office Hour + 48小时适配答复 + 推荐资格</p></div>
+          <div class="card"><h3>其余 · 自助</h3><p class="tiny" style="margin-top:4%">文档、机器人分流、社区答疑与标准化升级路径</p></div>
+        </div>
+        <div class="notes"><strong>维护者不是普通用户：</strong>他们承担生态供给成本。最关键的运营资产不是群数量，而是Top维护者地图、每个插件的适配Owner和下一版本状态。对长期无人维护但用户量高的插件，要主动推动共同维护或迁移。</div>
+      </section>
+
+      <section class="slide" data-title="用户采用运营" data-summary="围绕发现、判断、安装、激活、留存设计插件用户漏斗">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">16 / USER ADOPTION</div></div>
+        <div class="eyebrow">用户侧运营</div>
+        <h2>目标不是“被安装”，而是用户能在<span class="accent">真实任务中持续使用</span></h2>
+        <table class="matrix" style="margin-top:3%">
+          <thead><tr><th>阶段</th><th>用户问题</th><th>运营动作</th><th>核心指标</th></tr></thead>
+          <tbody>
+            <tr><td><strong>发现</strong></td><td>我需要什么插件？</td><td>按场景而非包名组织；提供“研究、编码、数据、协作”解决方案页</td><td><span class="pill">曝光→详情</span></td></tr>
+            <tr><td><strong>判断</strong></td><td>它可靠吗、权限是否合理？</td><td>Verified标识、兼容日期、权限摘要、维护状态、替代方案</td><td><span class="pill">详情→安装</span></td></tr>
+            <tr><td><strong>安装</strong></td><td>失败后怎么处理？</td><td>一键自检、明确错误、Safe Mode与自动回滚</td><td><span class="pill green">安装成功率</span></td></tr>
+            <tr><td><strong>激活</strong></td><td>第一步如何产生价值？</td><td>首个任务模板、样例数据、3步引导与成功事件</td><td><span class="pill green">24h激活率</span></td></tr>
+            <tr><td><strong>留存</strong></td><td>更新后还能继续用吗？</td><td>健康检查、版本提醒、停更迁移、问题闭环与召回</td><td><span class="pill amber">W4留存率</span></td></tr>
+          </tbody>
+        </table>
+        <div class="quote" style="margin-top:3%;font-size:clamp(13px,1.2vw,20px)">推荐算法先优化“成功完成任务”，再优化下载量；禁止用下载量单指标制造头部固化。</div>
+        <div class="notes"><strong>漏斗边界：</strong>如果暂时没有内部遥测，先用安装成功回执、插件命令首次成功、7日内重复调用和卸载原因做最小事件集。任何数据采集必须可关闭、可解释，不采集任务正文或敏感参数。</div>
+      </section>
+
+      <section class="slide" data-title="版本协同运营" data-summary="建立Next适配窗口与版本门禁，把兼容问题前移到发布前">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">17 / RELEASE OPERATIONS</div></div>
+        <div class="eyebrow">版本协同</div>
+        <h2>把“发布后救火”改成<span class="accent">发布前14天共同适配</span></h2>
+        <table class="matrix" style="margin-top:3%">
+          <thead><tr><th>时间点</th><th>Harness团队</th><th>维护者</th><th>门禁 / 产出</th></tr></thead>
+          <tbody>
+            <tr><td><strong>T−21天</strong></td><td>冻结插件API变更，发布迁移草案</td><td>Top 20参与RFC评审</td><td>破坏性变更清单</td></tr>
+            <tr><td><strong>T−14天</strong></td><td>开放Next，启动兼容矩阵</td><td>Top 100运行CI并回传结果</td><td>红/黄/绿适配看板</td></tr>
+            <tr><td><strong>T−7天</strong></td><td>完成高频故障修复与文档</td><td>发布兼容版本或明确阻塞</td><td><span class="pill green">Top 50 ≥85%</span></td></tr>
+            <tr><td><strong>T日</strong></td><td>Current发布，展示已知问题</td><td>确认插件兼容范围</td><td><span class="pill">Top 50 ≥95%</span></td></tr>
+            <tr><td><strong>T+3天</strong></td><td>事故复盘与灰度扩大</td><td>处理残余问题、更新说明</td><td>问题闭环率 ≥90%</td></tr>
+          </tbody>
+        </table>
+        <div class="grid-3" style="margin-top:3%">
+          <div class="card soft-blue"><h3>Stable</h3><p class="tiny" style="margin-top:4%">保守用户；只接受已验证修复</p></div>
+          <div class="card soft-green"><h3>Current</h3><p class="tiny" style="margin-top:4%">主流用户；Top 50强门禁</p></div>
+          <div class="card soft-cyan"><h3>Next</h3><p class="tiny" style="margin-top:4%">维护者适配；允许失败但必须可诊断</p></div>
+        </div>
+        <div class="notes"><strong>运营角色：</strong>发布经理维护单一兼容看板；DevRel负责把阻塞送到正确维护者；工程负责可诊断性；插件作者对声明的兼容范围负责。Next不是把风险提前甩给社区，而是提供足够提前量与修复支持。</div>
+      </section>
+
+      <section class="slide" data-title="安全事件运营" data-summary="以严重度、响应SLA、处置权限和用户沟通形成安全闭环">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">18 / TRUST OPERATIONS</div></div>
+        <div class="eyebrow">安全与事故运营</div>
+        <h2>安全机制必须覆盖<span class="accent">发现—隔离—通知—恢复—复盘</span>全过程</h2>
+        <table class="matrix" style="margin-top:3%">
+          <thead><tr><th>级别</th><th>典型情形</th><th>首次响应</th><th>运营处置</th><th>用户沟通</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill red">P0</span></td><td>恶意代码、凭证外泄、大面积宿主崩溃</td><td><strong>15分钟</strong></td><td>远程禁用、停止分发、成立事件群</td><td>2小时内首报，持续更新</td></tr>
+            <tr><td><span class="pill amber">P1</span></td><td>高权限越界、核心插件广泛不兼容</td><td><strong>2小时</strong></td><td>降级推荐、固定安全版本、联系维护者</td><td>24小时内公告与缓解方案</td></tr>
+            <tr><td><span class="pill">P2</span></td><td>局部功能故障、权限披露不完整</td><td><strong>1工作日</strong></td><td>标记风险、限期修复、跟踪验证</td><td>Registry已知问题持续更新</td></tr>
+          </tbody>
+        </table>
+        <div class="flow" style="margin-top:4%">
+          <div class="flow-step"><div class="icon">1</div><h3>Detect</h3><p>扫描、遥测、社区报告</p></div>
+          <div class="flow-step"><div class="icon">2</div><h3>Contain</h3><p>禁用、隔离、停止推荐</p></div>
+          <div class="flow-step"><div class="icon">3</div><h3>Notify</h3><p>受影响版本和动作说明</p></div>
+          <div class="flow-step"><div class="icon">4</div><h3>Recover</h3><p>回滚、替代与验证</p></div>
+          <div class="flow-step"><div class="icon">5</div><h3>Learn</h3><p>72小时复盘并更新规则</p></div>
+        </div>
+        <div class="notes"><strong>需要管理层授权：</strong>值班人员必须有临时停止推荐和紧急禁用权限，事后复核，而不是每次事故逐级等待审批。公开沟通只描述已确认事实、影响范围、缓解动作和下次更新时间。</div>
+      </section>
+
+      <section class="slide" data-title="指标与数据看板" data-summary="以有效周活跃插件为北极星，配套供给、体验、风险和运营效率指标">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">19 / METRICS</div></div>
+        <div class="eyebrow">衡量体系</div>
+        <h2>北极星：<span class="accent">有效周活跃插件数</span>，而不是公开项目总数</h2>
+        <div class="card soft-blue" style="margin-top:2.5%;padding:2.8% 3.5%" data-anim><div class="grid-3"><div><div class="tiny strong accent">DEFINITION</div><h3 style="margin-top:3%">安装成功 + 本周至少一次成功调用</h3></div><div><div class="tiny strong accent">QUALITY GATE</div><h3 style="margin-top:3%">兼容声明有效且无未处理P0/P1</h3></div><div><div class="tiny strong accent">PRIVACY</div><h3 style="margin-top:3%">只记录事件，不记录任务正文</h3></div></div></div>
+        <div class="grid-4" style="margin-top:2.5%">
+          <div class="card"><div class="tiny strong accent">供给</div><h3 style="margin-top:5%">有效供给率</h3><p class="tiny" style="margin-top:5%">登记→可安装→可激活→周活跃</p></div>
+          <div class="card"><div class="tiny strong" style="color:var(--green)">体验</div><h3 style="margin-top:5%">安装成功率</h3><p class="tiny" style="margin-top:5%">24h激活、W4留存、卸载原因</p></div>
+          <div class="card"><div class="tiny strong" style="color:var(--red)">风险</div><h3 style="margin-top:5%">故障影响率</h3><p class="tiny" style="margin-top:5%">崩溃、隔离、权限变化、恢复时长</p></div>
+          <div class="card"><div class="tiny strong" style="color:var(--cyan)">效率</div><h3 style="margin-top:5%">适配周期</h3><p class="tiny" style="margin-top:5%">问题首响、解决时长、零回复率</p></div>
+        </div>
+        <div class="quote" style="margin-top:3%;font-size:clamp(13px,1.2vw,20px)">日看事故与兼容，周看漏斗与维护者阻塞，月看组合升降级；季度才看生态规模。</div>
+        <div class="notes"><strong>数据替代方案：</strong>内部数据尚未齐全时，第一阶段只埋六个最小事件：安装开始、安装成功、首次调用成功、调用失败、禁用、卸载。再用公开下载和GitHub活跃度补充维护风险，不能反过来把公开数据当作真实活跃。</div>
+      </section>
+
+      <section class="slide" data-title="12周路线图·上半程" data-summary="前6周完成基线、标准、隔离与首批兼容基础设施">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">20 / ROADMAP</div></div>
+        <div class="eyebrow">12周行动计划 · W1–W6</div>
+        <h2>上半程目标：先建立<span class="accent">基线、标准和止损能力</span></h2>
+        <div class="grid-3" style="margin-top:3%;flex:1;align-content:stretch">
+          <div class="phase" data-anim style="--delay:.03s"><div class="week">W1</div><h3>建账与定责</h3><ul><li>确定Top 100及A/B/C/D分层</li><li>为Top 50绑定内部Owner</li><li>建立事故与兼容统一看板</li></ul><div class="tiny strong accent">验收：100%有Owner</div></div>
+          <div class="phase" data-anim style="--delay:.07s"><div class="week">W2</div><h3>规则发布</h3><ul><li>Registry字段和Manifest RFC</li><li>SECURITY.md、严重度与SLA</li><li>遥测最小事件与隐私评审</li></ul><div class="tiny strong accent">验收：RFC进入评审</div></div>
+          <div class="phase" data-anim style="--delay:.11s"><div class="week">W3</div><h3>兼容基线</h3><ul><li>Top 50三通道兼容矩阵</li><li>SemVer集合与双运行时检查</li><li>22插件审计问题逐项复测</li></ul><div class="tiny strong accent">验收：基线报告v1</div></div>
+          <div class="phase cyan" data-anim style="--delay:.15s"><div class="week" style="color:var(--cyan)">W4</div><h3>故障止损</h3><ul><li>Safe Mode方案评审通过</li><li>失败插件显式隔离原型</li><li>P0远程禁用演练</li></ul><div class="tiny strong" style="color:var(--cyan)">验收：演练可恢复</div></div>
+          <div class="phase cyan" data-anim style="--delay:.19s"><div class="week" style="color:var(--cyan)">W5</div><h3>维护者试运行</h3><ul><li>Top 20专属触达</li><li>首次Office Hour与迁移诊所</li><li>Next适配看板开放</li></ul><div class="tiny strong" style="color:var(--cyan)">验收：Top 20响应≥80%</div></div>
+          <div class="phase cyan" data-anim style="--delay:.23s"><div class="week" style="color:var(--cyan)">W6</div><h3>首批上线</h3><ul><li>隔离与诊断灰度</li><li>Top 30自动兼容CI</li><li>首批20个Verified候选</li></ul><div class="tiny strong" style="color:var(--cyan)">验收：灰度无P0回归</div></div>
+        </div>
+        <div class="notes"><strong>上半程原则：</strong>第一周先锁定名单和Owner，否则后续协同会失焦。第四周必须完成真实演练，不接受只交设计文档。第六周只做小范围灰度，用事故和诊断数据决定是否扩大。</div>
+      </section>
+
+      <section class="slide" data-title="12周路线图·下半程" data-summary="后6周扩大验证、迁移头部插件并形成稳定运营节奏">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">21 / ROADMAP</div></div>
+        <div class="eyebrow">12周行动计划 · W7–W12</div>
+        <h2>下半程目标：把机制扩大到<span class="accent">Top 100并形成日常运营</span></h2>
+        <div class="grid-3" style="margin-top:3%;flex:1;align-content:stretch">
+          <div class="phase" data-anim style="--delay:.03s"><div class="week">W7</div><h3>Registry Alpha</h3><ul><li>Community / Verified分层上线</li><li>权限、兼容、维护状态可见</li><li>用户问题反馈入口统一</li></ul><div class="tiny strong accent">验收：50个插件入库</div></div>
+          <div class="phase" data-anim style="--delay:.07s"><div class="week">W8</div><h3>版本联动</h3><ul><li>首次完整Next适配周期</li><li>Top 50发布门禁运行</li><li>已知问题页与公告模板</li></ul><div class="tiny strong accent">验收：Next兼容≥85%</div></div>
+          <div class="phase" data-anim style="--delay:.11s"><div class="week">W9</div><h3>迁移周</h3><ul><li>Top 100集中迁移</li><li>每日两场迁移诊所</li><li>阻塞问题当日升级</li></ul><div class="tiny strong accent">验收：Top 100入库≥80%</div></div>
+          <div class="phase cyan" data-anim style="--delay:.15s"><div class="week" style="color:var(--cyan)">W10</div><h3>用户采用</h3><ul><li>四类场景解决方案页</li><li>首任务模板与激活引导</li><li>卸载原因与召回实验</li></ul><div class="tiny strong" style="color:var(--cyan)">验收：激活率基线</div></div>
+          <div class="phase cyan" data-anim style="--delay:.19s"><div class="week" style="color:var(--cyan)">W11</div><h3>事故演练</h3><ul><li>供应链污染桌面演练</li><li>禁用、回滚、通知全链路</li><li>权限变更重新授权</li></ul><div class="tiny strong" style="color:var(--cyan)">验收：P0首响≤15分钟</div></div>
+          <div class="phase cyan" data-anim style="--delay:.23s"><div class="week" style="color:var(--cyan)">W12</div><h3>复盘与常态化</h3><ul><li>发布首份生态健康报告</li><li>插件升降级与资源复盘</li><li>确定下季度OKR与预算</li></ul><div class="tiny strong" style="color:var(--cyan)">验收：四项决策闭环</div></div>
+        </div>
+        <div class="notes"><strong>下半程原则：</strong>从第七周开始，交付物必须进入真实用户路径。第九周用集中迁移解决头部供给，第十周开始验证用户价值，第十一周验证治理能力，第十二周把试运行机制固化为日常节奏。</div>
+      </section>
+
+      <section class="slide" data-title="运营节奏与责任" data-summary="用日、周、月、季度节奏和清晰RACI保证行动计划持续运转">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">22 / GOVERNANCE</div></div>
+        <div class="eyebrow">运营机制</div>
+        <h2>稳定生态靠固定节奏和明确责任，不能靠临时拉群</h2>
+        <div class="grid-4" style="margin-top:3%">
+          <div class="card soft-red" data-anim style="--delay:.03s"><div class="tiny strong" style="color:var(--red)">DAILY</div><h3 style="margin-top:6%">事故与阻塞分诊</h3><p class="tiny" style="margin-top:6%">15分钟；只看新P0/P1、版本阻塞与无人响应问题。</p></div>
+          <div class="card soft-blue" data-anim style="--delay:.09s"><div class="tiny strong accent">WEEKLY</div><h3 style="margin-top:6%">生态运营例会</h3><p class="tiny" style="margin-top:6%">兼容矩阵、维护者阻塞、漏斗异常、风险清单与Owner。</p></div>
+          <div class="card soft-cyan" data-anim style="--delay:.15s"><div class="tiny strong" style="color:var(--cyan)">MONTHLY</div><h3 style="margin-top:6%">组合升降级</h3><p class="tiny" style="margin-top:6%">重新计算A/B/C/D与Recommended，调整资源和曝光。</p></div>
+          <div class="card soft-green" data-anim style="--delay:.21s"><div class="tiny strong" style="color:var(--green)">QUARTERLY</div><h3 style="margin-top:6%">生态委员会</h3><p class="tiny" style="margin-top:6%">审议健康报告、重大规则、预算和下一季度空白场景。</p></div>
+        </div>
+        <table class="matrix" style="margin-top:3%">
+          <thead><tr><th>关键事项</th><th>R · 执行</th><th>A · 最终负责</th><th>C · 会签</th></tr></thead>
+          <tbody>
+            <tr><td>Registry与分层</td><td>生态产品/运营</td><td>生态负责人</td><td>工程、安全、DevRel</td></tr>
+            <tr><td>版本兼容与隔离</td><td>兼容工程</td><td>Harness工程负责人</td><td>DevRel、发布经理</td></tr>
+            <tr><td>安全事故处置</td><td>安全值班</td><td>安全负责人</td><td>法务、公关、生态负责人</td></tr>
+            <tr><td>维护者与用户增长</td><td>DevRel/生态运营</td><td>生态负责人</td><td>产品、数据</td></tr>
+          </tbody>
+        </table>
+        <div class="notes"><strong>会议规则：</strong>所有会议必须从同一看板读取事实，每个红色项目必须有Owner、截止日期和升级路径。周会不做全量口头汇报；正常项目异步更新，只讨论异常和需要决策的事项。</div>
+      </section>
+
+      <section class="slide" data-title="组织与资源" data-summary="建议11–14 FTE，12周33–42人月">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">23 / OPERATING MODEL</div></div>
+        <div class="eyebrow">组织配置</div>
+        <h2>建议锁定<span class="accent">11–14 FTE</span>，而不是依赖零散兼职</h2>
+        <div class="content-fill grid-2" style="gap:5%">
+          <div class="team-table" data-anim style="--delay:.04s">
+            <div class="head">职能</div><div class="head">FTE</div><div class="head">核心责任</div>
+            <div>生态产品/运营</div><div class="fte">2–3</div><div>Registry、分层运营、合作、指标</div>
+            <div>DevRel/文档</div><div class="fte">2</div><div>SDK、迁移、示例、维护者支持</div>
+            <div>Registry/兼容工程</div><div class="fte">3–4</div><div>校验、CI、隔离、Safe Mode、回滚</div>
+            <div>安全/供应链</div><div class="fte">2–3</div><div>Manifest、扫描、应急、下架、公告</div>
+            <div>社区支持/数据</div><div class="fte">2</div><div>问题分流、SLA、数据分析</div>
+          </div>
+          <div style="display:grid;gap:3%">
+            <div class="card soft-blue" data-anim style="--delay:.12s"><div class="num accent">33–42</div><div class="label">12周人月预算</div></div>
+            <div class="card" data-anim style="--delay:.18s"><h3>基础设施</h3><p class="muted" style="margin-top:4%">3个OS × 3条版本通道 × Top 50插件 ≈ 450个基础测试组合。</p></div>
+            <div class="card soft-cyan" data-anim style="--delay:.24s"><h3>资源不足时的取舍</h3><p class="muted" style="margin-top:4%">优先兼容、安全、Registry；暂缓内容拉新和大规模品牌活动。</p></div>
+          </div>
+        </div>
+        <div class="notes"><strong>资源口径：</strong>公开信息无法推断内部现有编制，所以这里给的是完成目标所需的专职能力，不是建议全部外部招聘。可以由现有团队划转，但必须明确锁定工时和Owner。</div>
+      </section>
+
+      <section class="slide" data-title="目标与决策" data-summary="12周目标和管理层需要立即确认的关键决策">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">24 / TARGETS & DECISIONS</div></div>
+        <div class="eyebrow">12周验收</div>
+        <h2>最终不看新增多少插件，而看<span class="accent">风险是否被控制、有效供给是否增长</span></h2>
+        <div class="grid-4" style="margin-top:3%">
+          <div class="card soft-green" data-anim style="--delay:.03s"><div class="num" style="color:var(--green)">100%</div><div class="label">单插件失败时宿主继续启动</div></div>
+          <div class="card soft-blue" data-anim style="--delay:.09s"><div class="num accent">95%</div><div class="label">Top 50 Current兼容率</div></div>
+          <div class="card soft-cyan" data-anim style="--delay:.15s"><div class="num" style="color:var(--cyan)">85%</div><div class="label">Top 50 Next兼容率</div></div>
+          <div class="card soft-amber" data-anim style="--delay:.21s"><div class="num" style="color:var(--amber)">&lt;10%</div><div class="label">公开讨论零回复率</div></div>
+        </div>
+        <div class="decision-list">
+          <div class="decision"><div class="check">1</div><div><h3>确认北极星</h3><p>用有效周活跃插件数替代插件总数。</p></div></div>
+          <div class="decision"><div class="check">2</div><div><h3>确认P0</h3><p>插件隔离、Safe Mode、兼容与安全入口。</p></div></div>
+          <div class="decision"><div class="check">3</div><div><h3>确认治理权</h3><p>允许降级、隔离、紧急禁用和回滚。</p></div></div>
+          <div class="decision"><div class="check">4</div><div><h3>确认资源</h3><p>11–14 FTE与最小化、可关闭的遥测。</p></div></div>
+        </div>
+        <div class="notes"><strong>收尾：</strong>管理层需要确认的不是某个页面长什么样，而是是否接受新的北极星、是否把隔离列为P0、是否授权对高风险插件做降级和禁用，以及是否锁定专职资源。没有这些决策，行动计划无法闭环。</div>
+      </section>
+
+      <section class="slide" data-title="执行风险与预案" data-summary="提前处理资源不足、维护者不响应、遥测争议和误伤风险">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">25 / RISKS</div></div>
+        <div class="eyebrow">执行风险</div>
+        <h2>计划最可能失败在<span class="accent">跨团队执行</span>，而不是技术方案本身</h2>
+        <table class="matrix" style="margin-top:3%">
+          <thead><tr><th>风险</th><th>早期信号</th><th>预案</th><th>触发升级</th></tr></thead>
+          <tbody>
+            <tr><td><strong>资源被临时抽走</strong></td><td>两周连续里程碑延期</td><td>冻结内容活动；优先隔离、安全、Top 50兼容</td><td><span class="pill red">管理层重排优先级</span></td></tr>
+            <tr><td><strong>头部维护者不响应</strong></td><td>7天无回复或连续两版失配</td><td>引入共同维护者；标记维护风险；准备替代迁移</td><td><span class="pill amber">降级Recommended</span></td></tr>
+            <tr><td><strong>遥测引发信任争议</strong></td><td>社区质疑采集范围</td><td>默认最小化、可关闭、公开Schema；不采集内容</td><td><span class="pill">隐私复审</span></td></tr>
+            <tr><td><strong>自动扫描误伤</strong></td><td>申诉率或误报率上升</td><td>高影响处置必须人工复核；提供申诉SLA和回滚</td><td><span class="pill">暂停自动下架</span></td></tr>
+            <tr><td><strong>Registry变成新瓶颈</strong></td><td>审核队列超过5工作日</td><td>Community自动收录，人工只审Verified/Recommended</td><td><span class="pill green">扩容或降级规则</span></td></tr>
+          </tbody>
+        </table>
+        <div class="quote" style="margin-top:3%;font-size:clamp(13px,1.2vw,20px)">明确“什么情况下停止、降级或回滚”，比只写成功路径更能提高12周计划可信度。</div>
+        <div class="notes"><strong>风险判断：</strong>这套计划的主要依赖是专职Owner和跨团队治理权。若资源不足，应该主动缩小治理范围，而不是同时推进市场、内容、认证和安全。自动化是扩展手段，不能替代对高影响处置的人工负责。</div>
+      </section>
+
+      <section class="slide" data-title="最终判断" data-summary="数量增长不是下一阶段的胜负手，治理系统才是">
+        <div class="deck-header"><div class="brand"><span class="brand-dot"></span>DEEPSEEK HARNESS</div><div class="section-label">26 / CLOSING</div></div>
+        <div class="hero" style="grid-template-columns:1fr 1fr">
+          <div data-anim style="--delay:.04s">
+            <div class="eyebrow">FINAL VIEW</div>
+            <h2 style="font-size:clamp(30px,3.5vw,60px)">数量增长不是下一阶段的胜负手，<span class="accent">治理系统才是。</span></h2>
+            <p class="subtitle" style="max-width:94%">只要故障隔离、兼容验证、权限透明和头部治理建立起来，即使短期不增加插件数量，生态的实际用户价值也会明显提升。</p>
+          </div>
+          <div class="card soft-blue" style="padding:7%;align-self:center" data-anim style="--delay:.14s">
+            <div class="tiny strong accent">FOUR QUESTIONS</div>
+            <div class="statement"><div class="index">1</div><div><h3>失败会不会拖垮宿主？</h3></div></div>
+            <div class="statement"><div class="index">2</div><div><h3>兼容是否经过真实验证？</h3></div></div>
+            <div class="statement"><div class="index">3</div><div><h3>用户能否看见权限风险？</h3></div></div>
+            <div class="statement"><div class="index">4</div><div><h3>官方能否快速隔离与恢复？</h3></div></div>
+          </div>
+        </div>
+        <div class="source">主要来源：dshfind、npm、DeepSeek Harness GitHub仓库与Discussions #5639 / #6608 / #7004 / #7006，以及2026-08-25历史生态普查。</div>
+        <div class="notes"><strong>结束语：</strong>这四个问题就是未来12周的总验收。如果答案都从“不能”变成“能”，生态才真正从开放社区走向可运营平台。</div>
+      </section>
+
+      <div class="slide-number" id="slideNumber">01 / 27</div>
+    </div>
+  </main>
+
+  <div class="progress"><span id="progressBar"></span></div>
+  <div class="key-hint">← → 翻页 · O 总览 · N 备注 · F 全屏</div>
+  <div class="controls" aria-label="幻灯片控制">
+    <button id="prevBtn" title="上一页" aria-label="上一页">←</button>
+    <button id="overviewBtn" title="总览" aria-label="总览">⋮</button>
+    <button id="nextBtn" title="下一页" aria-label="下一页">→</button>
+  </div>
+  <div class="notes-drawer" id="notesDrawer" role="dialog" aria-label="讲者备注"></div>
+  <div class="overview" id="overview" role="dialog" aria-label="幻灯片总览"></div>
+
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide')];
+      const total = slides.length;
+      const number = document.getElementById('slideNumber');
+      const progress = document.getElementById('progressBar');
+      const notes = document.getElementById('notesDrawer');
+      const overview = document.getElementById('overview');
+      let current = 0;
+
+      const clamp = (n) => Math.max(0, Math.min(total - 1, n));
+
+      function render(idx, updateHash = true) {
+        current = clamp(idx);
+        slides.forEach((slide, i) => {
+          slide.classList.toggle('is-active', i === current);
+          slide.classList.toggle('is-prev', i < current);
+        });
+        number.textContent = `${String(current + 1).padStart(2, '0')} / ${String(total).padStart(2, '0')}`;
+        progress.style.width = `${((current + 1) / total) * 100}%`;
+        notes.classList.remove('is-open');
+        if (updateHash) history.replaceState(null, '', `#/${current + 1}`);
+        document.title = `${slides[current].dataset.title} · DeepSeek Harness 插件生态报告`;
+      }
+
+      function toggleNotes() {
+        const body = slides[current].querySelector('.notes');
+        notes.innerHTML = body ? body.innerHTML : '本页暂无讲者备注。';
+        notes.classList.toggle('is-open');
+      }
+
+      function buildOverview() {
+        overview.innerHTML = '';
+        slides.forEach((slide, i) => {
+          const card = document.createElement('button');
+          card.className = 'overview-card';
+          card.innerHTML = `<div class="ov-num">${String(i + 1).padStart(2, '0')}</div><h3>${slide.dataset.title}</h3><p>${slide.dataset.summary || ''}</p>`;
+          card.addEventListener('click', () => { overview.classList.remove('is-open'); render(i); });
+          overview.appendChild(card);
+        });
+      }
+
+      function toggleOverview() {
+        notes.classList.remove('is-open');
+        overview.classList.toggle('is-open');
+      }
+
+      function fullscreen() {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+        else document.exitFullscreen?.();
+      }
+
+      document.addEventListener('keydown', (event) => {
+        if (overview.classList.contains('is-open')) {
+          if (event.key === 'Escape' || event.key.toLowerCase() === 'o') toggleOverview();
+          return;
+        }
+        if (['ArrowRight', 'PageDown', ' '].includes(event.key)) { event.preventDefault(); render(current + 1); }
+        else if (['ArrowLeft', 'PageUp'].includes(event.key)) { event.preventDefault(); render(current - 1); }
+        else if (event.key === 'Home') render(0);
+        else if (event.key === 'End') render(total - 1);
+        else if (event.key.toLowerCase() === 'n') toggleNotes();
+        else if (event.key.toLowerCase() === 'o') toggleOverview();
+        else if (event.key.toLowerCase() === 'f') fullscreen();
+        else if (event.key === 'Escape') notes.classList.remove('is-open');
+      });
+
+      document.getElementById('prevBtn').addEventListener('click', () => render(current - 1));
+      document.getElementById('nextBtn').addEventListener('click', () => render(current + 1));
+      document.getElementById('overviewBtn').addEventListener('click', toggleOverview);
+
+      let touchStart = null;
+      document.getElementById('stage').addEventListener('touchstart', e => touchStart = e.changedTouches[0].clientX, {passive: true});
+      document.getElementById('stage').addEventListener('touchend', e => {
+        if (touchStart === null) return;
+        const delta = e.changedTouches[0].clientX - touchStart;
+        if (Math.abs(delta) > 45) render(current + (delta < 0 ? 1 : -1));
+        touchStart = null;
+      }, {passive: true});
+
+      buildOverview();
+      const match = location.hash.match(/#\/(\d+)/);
+      render(match ? Number(match[1]) - 1 : 0, false);
+    })();
+  </script>
+</body>
+</html>
